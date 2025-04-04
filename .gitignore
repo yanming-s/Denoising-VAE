@@ -1,0 +1,23 @@
+# Data files
+data/*
+imagenet-mini/*
+imagenet-data/*
+final_data/*
+formatted_data/*
+split_data/*
+gaussian_noise/*
+speckle_noise/*
+frost_noise/*
+defocus_blur/*
+jpeg_compression/*
+tensor_data/*
+
+# Cache files
+utils/__pycache__/*
+
+# Model files
+models/__pycache__/*
+
+# Output files
+logs/*
+checkpoints/*
