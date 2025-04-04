@@ -34,7 +34,7 @@ rename_directory('./imagenet-data','./clean')
 create_directory('./noisy')
 noisy_directories =['./gaussian_noise','./speckle_noise', './frost_noise', './defocus_blur', './jpeg_compression']
 for noisy_dir in noisy_directories:
-    rename_directory(noisy_dir+'/3', noisy_dir+f'/{noisy_dir.split("/")[-1]}')
+    rename_directory(noisy_dir+'/1', noisy_dir+f'/{noisy_dir.split("/")[-1]}')
 for noisy_dir in noisy_directories:
     move_directory(noisy_dir+f'/{noisy_dir.split("/")[-1]}', './noisy')
 create_directory('./final_data')
