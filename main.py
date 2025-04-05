@@ -6,57 +6,45 @@ import wandb
 import time
 
 from utils.data_process import get_multi_noise_dataloader
-from models.vae import VAE, VAE_Module
+from models.dvae import DVAE, DVAE_Module
 
 
-def main(model_name = "vae", reload_model=False):
+def main(reload_model=False):
     # Load the dataset
     root_tensor_dir = "tensor_data/"
     train_dataloader = get_multi_noise_dataloader(root_tensor_dir, batch_size=64)
     
     # Initialize the model
-    if model_name == "vae":
-        model_args = {
-            "img_size": 224,
-            "patch_size": 16,
-            "in_channels": 3,
-            "latent_dim": 256,
-            "embed_dim": 512,
-            "encoder_depth": 6,
-            "num_heads": 8,
-            "mlp_dim": 512*4,
-            "decoder_base_channels": 64,
-            "dropout": 0.1
-        }
-        model = VAE(**model_args)
-    else:
-        raise ValueError(f"Unknown model name: {model_name}")
-    model_path = f"{model_name}.pth"
+    model_args = {
+        "image_size": 224,
+        "n_channels": 3,
+        "latent_dim": 512,
+        "bilinear": True
+    }
+    model = DVAE(**model_args)
+    model_path = "dvae.pth"
     if reload_model and osp.exists(model_path):
         model.load_state_dict(torch.load(model_path, weights_only=True))
 
     # Initialize wandb
     date = time.strftime("%Y-%m-%d")
     timestamp = time.strftime("%H-%M-%S")
-    save_dir = f"logs/{date}/{model_name}-vit-unet-{timestamp}"
+    save_dir = f"logs/{date}/dvae-{timestamp}"
     if not osp.exists(save_dir):
         os.makedirs(save_dir)
     wandb.init(
-        project="CS5340-VAE-Denoising",
-        name=f"{model_name}_vit_unet",
+        project="DVAE",
+        name=f"denoising-vae-unet",
         dir=save_dir,
         config=model_args,
         mode="online"
     )
     
     # Initialize lightning modules
-    if model_name == "vae":
-        train_module = VAE_Module(
-            model=model,
-            train_loader=train_dataloader
-        )
-    else:
-        raise ValueError(f"Unknown model name: {model_name}")
+    train_module = DVAE_Module(
+        model=model,
+        train_loader=train_dataloader
+    )
 
     # Set up the trainer
     gpu = torch.cuda.is_available()
@@ -78,7 +66,7 @@ def main(model_name = "vae", reload_model=False):
     save_dir = "checkpoints"
     if not osp.exists(save_dir):
         os.makedirs(save_dir)
-    save_path = osp.join(save_dir, f"{model_name}.pth")
+    save_path = osp.join(save_dir, "dvae.pth")
     if osp.exists(save_path):
         os.remove(save_path)
     torch.save(model.state_dict(), save_path)
@@ -86,4 +74,4 @@ def main(model_name = "vae", reload_model=False):
 
 
 if __name__ == "__main__":
-    main("vae")
+    main()

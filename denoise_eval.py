@@ -4,7 +4,7 @@ import time
 import torch
 import matplotlib.pyplot as plt
 
-from models.vae import VAE
+from models.dvae import DVAE
 
 
 def denormalize(tensor):
@@ -22,7 +22,7 @@ def denormalize(tensor):
     return tensor
 
 
-def main(index=0, ckpt_path="checkpoints/vae.pth"):
+def main(index=0, ckpt_path="checkpoints/dvae.pth"):
     """
     Denoising demo for the VAE model.
     Args:
@@ -70,7 +70,7 @@ def main(index=0, ckpt_path="checkpoints/vae.pth"):
     plt.tight_layout()
     plt.savefig(osp.join(save_dir, f"sample-{index}.png"))
     # Load the model
-    model = VAE()
+    model = DVAE()
     model.load_state_dict(torch.load(ckpt_path, weights_only=True))
     model.eval()
     device = "cpu"
