@@ -174,8 +174,8 @@ class DVAE_Module(LightningModule):
     """
     PyTorch Lightning module for VAE Training
     """
-    def __init__(self, model, train_loader, lr=1e-4, scheduler="cosine", save_ckpt=True,
-                 save_every_epoch=5, save_dir="checkpoints", max_grad_norm=1.0):
+    def __init__(self, model, train_loader, lr=1e-5, scheduler="cosine", save_ckpt=True,
+                 save_every_epoch=5, save_dir="checkpoints", max_grad_norm=0.5):
         super().__init__()
         # Module setup
         self.model = model
@@ -222,8 +222,9 @@ class DVAE_Module(LightningModule):
         self.log("train_loss", avg_loss.item())
         self.train_step_outputs.clear()
         # Update KL weight and max grad norm
-        if self.current_epoch >= 5:
-            self.kl_weight = min(0.5, self.current_epoch / 80)
+        if self.current_epoch >= 10:
+            self.kl_weight = min(0.5, self.current_epoch / 100)
+            self.max_grad_norm = max(5.0, self.max_grad_norm*1.05)
         # Save model
         if self.save_ckpt and (self.current_epoch + 1) % self.save_every_epoch == 0:
             save_path = osp.join(self.save_dir, f"epoch_{self.current_epoch + 1}.pth")

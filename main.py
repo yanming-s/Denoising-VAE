@@ -49,7 +49,7 @@ def main(reload_model=False):
     # Set up the trainer
     gpu = torch.cuda.is_available()
     trainer = Trainer(
-        max_epochs=100,
+        max_epochs=20,
         accelerator="gpu" if gpu else "cpu",
         devices=[0] if gpu else 1,
         callbacks=[],
