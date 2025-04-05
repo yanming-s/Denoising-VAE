@@ -203,7 +203,7 @@ class VAE_Module(LightningModule):
     PyTorch Lightning module for ViT-VAE Training
     """
     def __init__(self, model, train_loader, lr=5e-5, scheduler="cosine", save_ckpt=True,
-                 save_every_epoch=25, save_dir="checkpoints", max_grad_norm=0.5):
+                 save_every_epoch=5, save_dir="checkpoints", max_grad_norm=0.5):
         super().__init__()
         # Module setup
         self.model = model

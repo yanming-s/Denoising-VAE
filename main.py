@@ -64,7 +64,6 @@ def main(model_name = "vae", reload_model=False):
         max_epochs=100,
         accelerator="gpu" if gpu else "cpu",
         devices=[0] if gpu else 1,
-        precision="16-mixed",
         callbacks=[],
         enable_progress_bar=False,
         log_every_n_steps=1,

@@ -232,12 +232,12 @@ def jpeg_compression(x, severity=1):
 
 # ---------------------- Processing Function ---------------------- #
 
-def process_images(input_folder, output_folder, method, severity_levels=5, resize=False):
+def process_images(input_folder, output_folder, method, severity_levels=1, resize=False):
     """
     Applies a given noise method to all images in the input folder
     and saves the output to the specified output folder.
     """
-    for severity in range(5, severity_levels + 1):
+    for severity in range(1, severity_levels + 1):
         print(f"Applying {method.__name__} with severity {severity}...")
 
         dataset = DistortImageFolder(
