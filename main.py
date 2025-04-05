@@ -20,12 +20,12 @@ def main(model_name = "vae", reload_model=False):
             "img_size": 224,
             "patch_size": 16,
             "in_channels": 3,
-            "latent_dim": 512,
-            "embed_dim": 768,
-            "encoder_depth": 12,
-            "decoder_depth": 12,
-            "num_heads": 12, 
-            "mlp_dim": 768*4,
+            "latent_dim": 256,
+            "embed_dim": 512,
+            "encoder_depth": 6,
+            "num_heads": 8,
+            "mlp_dim": 512*4,
+            "decoder_base_channels": 64,
             "dropout": 0.1
         }
         model = VAE(**model_args)
@@ -38,12 +38,12 @@ def main(model_name = "vae", reload_model=False):
     # Initialize wandb
     date = time.strftime("%Y-%m-%d")
     timestamp = time.strftime("%H-%M-%S")
-    save_dir = f"logs/{date}/{model_name}-{timestamp}"
+    save_dir = f"logs/{date}/{model_name}-vit-unet-{timestamp}"
     if not osp.exists(save_dir):
         os.makedirs(save_dir)
     wandb.init(
         project="CS5340-VAE-Denoising",
-        name=f"{model_name}_multi_noise",
+        name=f"{model_name}_vit_unet",
         dir=save_dir,
         config=model_args,
         mode="online"

@@ -10,6 +10,33 @@ import wandb
 from models.vit import Transformer_Layer, Patch_Embedding
 
 
+class UpBlock(nn.Module):
+    """
+    Upsampling block for UNet decoder
+    """
+    def __init__(self, in_channels, out_channels, dropout=0.1):
+        super().__init__()
+        # Upsampling followed by a convolution (transposed conv alternative)
+        self.upsample = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
+        # Double convolution block
+        self.double_conv = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.GELU(),
+            nn.Dropout2d(dropout),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.GELU(),
+            nn.Dropout2d(dropout)
+        )
+    def forward(self, x):
+        # Upsample
+        x = self.upsample(x)
+        # Apply double convolution
+        x = self.double_conv(x)
+        return x
+
+
 class ViT_Encoder(nn.Module):
     """
     ViT Encoder for VAE
@@ -55,71 +82,68 @@ class ViT_Encoder(nn.Module):
         return mu, log_var
 
 
-class ViT_Decoder(nn.Module):
+class UNet_Decoder(nn.Module):
     """
-    ViT Decoder for VAE
+    UNet Decoder for VAE
     """
-    def __init__(self, img_size, patch_size, out_channels, latent_dim,
-                 embed_dim, depth, num_heads, mlp_dim, dropout):
+    def __init__(self, img_size, out_channels, latent_dim, base_channels, dropout):
         super().__init__()
         self.img_size = img_size
-        self.patch_size = patch_size
-        self.out_channels = out_channels
-        self.num_patches = (img_size // patch_size) ** 2
-        # Project from latent space to patches
-        self.latent_to_embed = nn.Linear(latent_dim, embed_dim * self.num_patches)
-        # Learnable positional embeddings
-        self.pos_embed = nn.Parameter(torch.zeros(1, self.num_patches, embed_dim))
-        self.pos_drop = nn.Dropout(dropout)
-        # Stack transformer decoder layers
-        self.transformer_layers = nn.ModuleList([
-            Transformer_Layer(embed_dim, num_heads, mlp_dim, dropout)
-            for _ in range(depth)
-        ])
-        self.norm = nn.LayerNorm(embed_dim)
-        # Projection to image patches
-        self.patch_proj = nn.Linear(embed_dim, patch_size * patch_size * out_channels)
-        self._init_weights()
-    def _init_weights(self):
-        nn.init.trunc_normal_(self.pos_embed, std=0.02)
+        # Calculate number of spatial dimensions needed for initial feature map
+        self.init_size = img_size // 16
+        self.latent_channels = base_channels * 8
+        # Project from latent vector to initial feature map
+        self.latent_to_features = nn.Sequential(
+            nn.Linear(latent_dim, self.init_size * self.init_size * self.latent_channels),
+            nn.GELU()
+        )
+        # Upsampling blocks
+        # Each block doubles the spatial dimensions and halves the channels
+        self.up1 = UpBlock(self.latent_channels, base_channels * 4, dropout)
+        self.up2 = UpBlock(base_channels * 4, base_channels * 2, dropout)
+        self.up3 = UpBlock(base_channels * 2, base_channels, dropout)
+        self.up4 = UpBlock(base_channels, base_channels, dropout)
+        # Final convolution to get the right number of output channels
+        self.final_conv = nn.Sequential(
+            nn.Conv2d(base_channels, out_channels, kernel_size=3, padding=1),
+            nn.Sigmoid()  # Ensures output is in [0, 1] range
+        )
     def forward(self, z):
         # z: [bs, latent_dim]
         bs = z.shape[0]
-        # Project from latent space to patch embeddings
-        x = self.latent_to_embed(z)  # [bs, num_patches * embed_dim]
-        x = x.view(bs, self.num_patches, -1)  # [bs, num_patches, embed_dim]
-        # Add positional embeddings
-        x = x + self.pos_embed
-        x = self.pos_drop(x)
-        # Transformer expects [seq_length, batch_size, embed_dim]
-        x = x.transpose(0, 1)
-        for block in self.transformer_layers:
-            x = block(x) 
-        x = self.norm(x)
-        # Back to [bs, num_patches, embed_dim]
-        x = x.transpose(0, 1)
-        # Project to patch pixels
-        x = self.patch_proj(x)  # [bs, num_patches, patch_size * patch_size * out_channels]
-        # Reshape to image
-        patches_side = self.img_size // self.patch_size
-        x = x.view(bs, patches_side, patches_side, self.patch_size, self.patch_size, self.out_channels)
-        x = x.permute(0, 5, 1, 3, 2, 4).contiguous()
-        x = x.view(bs, self.out_channels, self.img_size, self.img_size)
-        # Apply sigmoid to get values in [0, 1]
-        x = torch.sigmoid(x)
+        # Project and reshape to initial feature map
+        x = self.latent_to_features(z)
+        x = x.view(bs, self.latent_channels, self.init_size, self.init_size)
+        # Upsampling path
+        x = self.up1(x)
+        x = self.up2(x)
+        x = self.up3(x)
+        x = self.up4(x)
+        # Final convolution
+        x = self.final_conv(x)
         return x
 
 
 class VAE(nn.Module):
     """
-    Vision Transformer VAE
+    VAE with ViT Encoder and UNet Decoder
     """
-    def __init__(self, img_size=224, patch_size=16, in_channels=3,
-                 latent_dim=512, embed_dim=768, encoder_depth=12,
-                 decoder_depth=12, num_heads=12, mlp_dim=768*4, dropout=0.1):
+    def __init__(
+        self,
+        img_size=224,
+        patch_size=16,
+        in_channels=3,
+        latent_dim=256,
+        embed_dim=512,
+        encoder_depth=6,
+        num_heads=8,
+        mlp_dim=512*4,
+        decoder_base_channels=64,
+        dropout=0.1
+    ):
         super().__init__()
         self.latent_dim = latent_dim
-        # Encoder
+        # ViT Encoder (unchanged)
         self.encoder = ViT_Encoder(
             img_size=img_size,
             patch_size=patch_size,
@@ -131,16 +155,12 @@ class VAE(nn.Module):
             mlp_dim=mlp_dim,
             dropout=dropout
         )
-        # Decoder
-        self.decoder = ViT_Decoder(
+        # UNet Decoder (new)
+        self.decoder = UNet_Decoder(
             img_size=img_size,
-            patch_size=patch_size,
             out_channels=in_channels,
             latent_dim=latent_dim,
-            embed_dim=embed_dim,
-            depth=decoder_depth,
-            num_heads=num_heads,
-            mlp_dim=mlp_dim,
+            base_channels=decoder_base_channels,
             dropout=dropout
         )
     
