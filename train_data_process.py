@@ -5,6 +5,9 @@ from utils.add_noise import process_images, gaussian_noise, speckle_noise, frost
 from utils.split_data import split_and_process_dataset
 from utils.data_process import dataset_preprocess
 from shutil import rmtree
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 #####################################
@@ -14,6 +17,7 @@ from shutil import rmtree
 # Download the dataset from Kaggle
 os.environ["KAGGLE_CONFIG_DIR"] = os.getcwd()  # Use current directory
 dataset_identifier = "ifigotin/imagenetmini-1000" 
+print("Start downloading dataset...")
 kaggle.api.dataset_download_files(dataset_identifier, path="data/", unzip=True)
 print("Dataset downloaded successfully in 'data/' folder.")
 
@@ -37,7 +41,7 @@ rename_directory('./imagenet-data','./clean')
 create_directory('./noisy')
 noisy_directories =['./gaussian_noise','./speckle_noise', './frost_noise', './defocus_blur', './jpeg_compression']
 for noisy_dir in noisy_directories:
-    rename_directory(noisy_dir+'/2', noisy_dir+f'/{noisy_dir.split("/")[-1]}')
+    rename_directory(noisy_dir+f'/{severity_levels}', noisy_dir+f'/{noisy_dir.split("/")[-1]}')
 for noisy_dir in noisy_directories:
     move_directory(noisy_dir+f'/{noisy_dir.split("/")[-1]}', './noisy')
 create_directory('./final_data')
