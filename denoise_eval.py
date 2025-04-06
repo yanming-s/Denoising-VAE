@@ -79,7 +79,7 @@ def main(index=0, ckpt_path="checkpoints/dvae.pth"):
         device = "cuda"
     model.to(device)
     # Denoise the images
-    sample_batch = speckle_batch.to(device)
+    sample_batch = gaussian_batch.to(device)
     recong_batch, _, _ = model(sample_batch)
     recong_batch = recong_batch.detach().cpu()
     sample_batch = sample_batch.detach().cpu()
