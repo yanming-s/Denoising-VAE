@@ -21,4 +21,3 @@ models/__pycache__/*
 # Output files
 logs/*
 checkpoints/*
-imgs/*

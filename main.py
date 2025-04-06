@@ -22,9 +22,10 @@ def main(reload_model=False):
         "bilinear": True
     }
     model = DVAE(**model_args)
-    model_path = "dvae.pth"
+    model_path = "checkpoints/dvae.pth"
     if reload_model and osp.exists(model_path):
         model.load_state_dict(torch.load(model_path, weights_only=True))
+        print(f"\n>>> Model loaded from {model_path}\n")
 
     # Initialize wandb
     date = time.strftime("%Y-%m-%d")
@@ -43,13 +44,14 @@ def main(reload_model=False):
     # Initialize lightning modules
     train_module = DVAE_Module(
         model=model,
-        train_loader=train_dataloader
+        train_loader=train_dataloader,
+        save_every_epoch=10
     )
 
     # Set up the trainer
     gpu = torch.cuda.is_available()
     trainer = Trainer(
-        max_epochs=20,
+        max_epochs=5,
         accelerator="gpu" if gpu else "cpu",
         devices=[0] if gpu else 1,
         callbacks=[],
@@ -74,4 +76,4 @@ def main(reload_model=False):
 
 
 if __name__ == "__main__":
-    main()
+    main(reload_model=True)

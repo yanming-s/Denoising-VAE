@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import pytorch_lightning as pl
 from pytorch_lightning import LightningModule
 import os
 import os.path as osp

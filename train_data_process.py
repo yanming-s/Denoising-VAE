@@ -7,7 +7,9 @@ from utils.data_process import dataset_preprocess
 from shutil import rmtree
 
 
-# Author: suryaansh2002
+#####################################
+###     Author: suryaansh2002     ###
+#####################################
 
 # Download the dataset from Kaggle
 os.environ["KAGGLE_CONFIG_DIR"] = os.getcwd()  # Use current directory
@@ -25,16 +27,17 @@ count_jpeg_files('./imagenet-mini')
 copy_jpeg_files('./imagenet-mini','./imagenet-data')
 delete_directory('./imagenet-mini')
 delete_directory('./data')
-process_images('./imagenet-data', './gaussian_noise', gaussian_noise)
-process_images('./imagenet-data', './speckle_noise', speckle_noise)
-process_images('./imagenet-data', './frost_noise', frost)
-process_images('./imagenet-data', './defocus_blur', defocus_blur)
-process_images('./imagenet-data', './jpeg_compression', jpeg_compression)
+severity_levels = 3 # Number of severity levels for noise, can be [1, 2, 3, 4, 5]
+process_images('./imagenet-data', './gaussian_noise', gaussian_noise, severity_levels)
+process_images('./imagenet-data', './speckle_noise', speckle_noise, severity_levels)
+process_images('./imagenet-data', './frost_noise', frost, severity_levels)
+process_images('./imagenet-data', './defocus_blur', defocus_blur, severity_levels)
+process_images('./imagenet-data', './jpeg_compression', jpeg_compression, severity_levels)
 rename_directory('./imagenet-data','./clean')
 create_directory('./noisy')
 noisy_directories =['./gaussian_noise','./speckle_noise', './frost_noise', './defocus_blur', './jpeg_compression']
 for noisy_dir in noisy_directories:
-    rename_directory(noisy_dir+'/1', noisy_dir+f'/{noisy_dir.split("/")[-1]}')
+    rename_directory(noisy_dir+'/2', noisy_dir+f'/{noisy_dir.split("/")[-1]}')
 for noisy_dir in noisy_directories:
     move_directory(noisy_dir+f'/{noisy_dir.split("/")[-1]}', './noisy')
 create_directory('./final_data')

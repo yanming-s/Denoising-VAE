@@ -1,6 +1,7 @@
 import os
 import os.path as osp
 import time
+import random
 import torch
 import matplotlib.pyplot as plt
 
@@ -42,30 +43,30 @@ def main(index=0, ckpt_path="checkpoints/dvae.pth"):
     if not osp.exists(save_dir):
         os.makedirs(save_dir)
     # Draw the images
-    plt.figure(figsize=(20, 10))
+    plt.figure(figsize=(12, 8))
     plt.subplot(2, 3, 1)
     plt.imshow(denormalize(clean_batch[index].permute(1, 2, 0)).numpy())
-    plt.title("Clean Image")
+    plt.title("Clean Image", fontsize=12)
     plt.axis('off')
     plt.subplot(2, 3, 2)
     plt.imshow(denormalize(defocus_batch[index].permute(1, 2, 0)).numpy())
-    plt.title("Defocus Blur")
+    plt.title("Defocus Blur", fontsize=12)
     plt.axis('off')
     plt.subplot(2, 3, 3)
     plt.imshow(denormalize(frost_batch[index].permute(1, 2, 0)).numpy())
-    plt.title("Frost Noise")
+    plt.title("Frost Noise", fontsize=12)
     plt.axis('off')
     plt.subplot(2, 3, 4)
     plt.imshow(denormalize(gaussian_batch[index].permute(1, 2, 0)).numpy())
-    plt.title("Gaussian Noise")
+    plt.title("Gaussian Noise", fontsize=12)
     plt.axis('off')
     plt.subplot(2, 3, 5)
     plt.imshow(denormalize(jpeg_batch[index].permute(1, 2, 0)).numpy())
-    plt.title("JPEG Compression")
+    plt.title("JPEG Compression", fontsize=12)
     plt.axis('off')
     plt.subplot(2, 3, 6)
     plt.imshow(denormalize(speckle_batch[index].permute(1, 2, 0)).numpy())
-    plt.title("Speckle Noise")
+    plt.title("Speckle Noise", fontsize=12)
     plt.axis('off')
     plt.tight_layout()
     plt.savefig(osp.join(save_dir, f"sample-{index}.png"))
@@ -78,24 +79,29 @@ def main(index=0, ckpt_path="checkpoints/dvae.pth"):
         device = "cuda"
     model.to(device)
     # Denoise the images
-    sample_batch = gaussian_batch.to(device)
+    sample_batch = speckle_batch.to(device)
     recong_batch, _, _ = model(sample_batch)
     recong_batch = recong_batch.detach().cpu()
     sample_batch = sample_batch.detach().cpu()
     # Draw the images
-    plt.figure(figsize=(20, 10))
-    plt.subplot(1, 2, 1)
+    plt.figure(figsize=(16, 6))
+    plt.subplot(1, 3, 1)
     plt.imshow(denormalize(sample_batch[index].permute(1, 2, 0)).numpy())
-    plt.title("Clean Image", fontsize=25)
+    plt.title("Noisy Image", fontsize=12)
     plt.axis('off')
-    plt.subplot(1, 2, 2)
+    plt.subplot(1, 3, 2)
+    plt.imshow(denormalize(clean_batch[index].permute(1, 2, 0)).numpy())
+    plt.title("Clean Truth", fontsize=12)
+    plt.axis('off')
+    plt.subplot(1, 3, 3)
     plt.imshow(denormalize(recong_batch[index].permute(1, 2, 0)).numpy())
-    plt.title("Reconstructed Image", fontsize=25)
+    plt.title("Reconstructed Image", fontsize=12)
     plt.axis('off')
     plt.tight_layout()
     plt.savefig(osp.join(save_dir, f"denoise-{index}.png"))
 
 if __name__ == "__main__":
-    index = 0
-    ckpt_path = "checkpoints/vae.pth"
+    random.seed(int(time.time()))
+    index = random.randint(0, 64)
+    ckpt_path = "checkpoints/dvae.pth"
     main(index=index, ckpt_path=ckpt_path)
