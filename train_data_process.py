@@ -31,7 +31,7 @@ count_jpeg_files('./imagenet-mini')
 copy_jpeg_files('./imagenet-mini','./imagenet-data')
 delete_directory('./imagenet-mini')
 delete_directory('./data')
-severity_levels = 3 # Number of severity levels for noise, can be [1, 2, 3, 4, 5]
+severity_levels = 5 # Number of severity levels for noise, can be [1, 2, 3, 4, 5]
 process_images('./imagenet-data', './gaussian_noise', gaussian_noise, severity_levels)
 process_images('./imagenet-data', './speckle_noise', speckle_noise, severity_levels)
 process_images('./imagenet-data', './frost_noise', frost, severity_levels)

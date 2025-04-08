@@ -22,7 +22,7 @@ def main(reload_model=False):
         "bilinear": True
     }
     model = DVAE(**model_args)
-    model_path = "checkpoints/dvae.pth"
+    model_path = "checkpoints/dvae_pretrained.pth"
     if reload_model and osp.exists(model_path):
         model.load_state_dict(torch.load(model_path, weights_only=True))
         print(f"\n>>> Model loaded from {model_path}\n")
@@ -35,7 +35,7 @@ def main(reload_model=False):
         os.makedirs(save_dir)
     wandb.init(
         project="DVAE",
-        name=f"denoising-vae-unet",
+        name=f"denoising-vae",
         dir=save_dir,
         config=model_args,
         mode="online"
@@ -45,13 +45,13 @@ def main(reload_model=False):
     train_module = DVAE_Module(
         model=model,
         train_loader=train_dataloader,
-        save_every_epoch=10
+        save_every_epoch=5
     )
 
     # Set up the trainer
     gpu = torch.cuda.is_available()
     trainer = Trainer(
-        max_epochs=5,
+        max_epochs=20,
         accelerator="gpu" if gpu else "cpu",
         devices=[0] if gpu else 1,
         callbacks=[],

@@ -249,7 +249,7 @@ def process_images(input_folder, output_folder, method, severity_levels=3, resiz
             # transform=None
         )
 
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=100, shuffle=False, num_workers=4)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=100, shuffle=False, num_workers=2)
 
         for _ in dataloader:
             pass  # Just to trigger processing

@@ -24,12 +24,11 @@ def convert_img_to_tensor(img_dir, save_dir, split_chunk=True, chunk_size=64):
     ])
     if split_chunk:
         # Process images in chunks of size chunk_size.
-        filenames = [f for f in os.listdir(img_dir) if f.lower().endswith(('.jpg', '.jpeg'))]
+        filenames = sorted([f for f in os.listdir(img_dir) if f.lower().endswith(('.jpg', '.jpeg'))])
         if not filenames:
             torch.save(torch.empty(0), osp.join(save_dir, "images_0.pt"))
             return
         chunk_idx = 0
-        total_chunks = (len(filenames) + chunk_size - 1) // chunk_size
         for i in range(0, len(filenames), chunk_size):
             chunk_files = filenames[i:i+chunk_size]
             chunk_tensors = []
@@ -44,7 +43,7 @@ def convert_img_to_tensor(img_dir, save_dir, split_chunk=True, chunk_size=64):
     else:
         # Process all images at once.
         tensors = []
-        for filename in os.listdir(img_dir):
+        for filename in sorted(os.listdir(img_dir)):
             if filename.lower().endswith(('.jpg', '.jpeg')):
                 img_path = osp.join(img_dir, filename)
                 image = Image.open(img_path).convert("RGB")
